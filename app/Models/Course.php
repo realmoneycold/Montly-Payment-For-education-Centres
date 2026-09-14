@@ -355,7 +355,7 @@ class Course extends Model
         if ($this->teacher_id) {
             return $this->teacher?->name;
         } else {
-            return '-';
+            return $this->teacher_name ?: '-';
         }
     }
 

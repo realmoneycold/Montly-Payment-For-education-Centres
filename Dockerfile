@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN install-php-extensions \
     pdo_mysql \
+    pdo_sqlite \
     mbstring \
     exif \
     pcntl \
@@ -41,7 +42,8 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
-RUN php artisan package:discover --ansi \
+RUN rm -f bootstrap/cache/*.php \
+    && php artisan package:discover --ansi \
     && php artisan view:clear \
     && php artisan storage:link || true
 

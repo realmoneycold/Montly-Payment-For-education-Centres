@@ -79,48 +79,48 @@
                             </div>
 
                             {{-- Card content - links to enrollments --}}
-                            <a href="{{ $course['enrollments_url'] }}" class="block p-4">
-                                <div class="mb-2 flex items-start justify-between gap-2 pr-6">
-                                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $course['name'] }}</h3>
-                                    <span class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $course['enrollments_count'] > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                        {{ $course['enrollments_count'] }} {{ __('students') }}
-                                    </span>
-                                </div>
-
-                                <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                    <p>
-                                        <span class="font-medium">{{ __('Teacher') }}:</span>
-                                        {{ $course['teacher'] }}
-                                    </p>
-
-                                    <p>
-                                        <span class="font-medium">{{ __('Room') }}:</span>
-                                        {{ $course['room'] ?? '-' }}
-                                    </p>
-
-                                    @if ($course['schedule'])
-                                        <p>
-                                            <span class="font-medium">{{ __('Schedule') }}:</span>
-                                            {{ $course['schedule'] }}
-                                        </p>
-                                    @endif
-
-                                    <p>
-                                        {{ $course['start_date'] }} — {{ $course['end_date'] }}
-                                    </p>
-
-                                    <div class="flex items-center justify-between pt-1">
-                                        @if ($course['volume'])
-                                            <span>{{ $course['volume'] }}h</span>
-                                        @endif
-
-                                        @if ($course['spots'])
-                                            <span class="text-xs text-gray-400 dark:text-gray-500">
-                                                {{ $course['spots'] - $course['enrollments_count'] }} {{ __('spots left') }}
-                                            </span>
-                                        @endif
+                                <a href="{{ $course['enrollments_url'] }}" class="block p-4">
+                                    <div class="mb-3 flex items-start justify-between gap-2 pr-6">
+                                        <h3 class="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">{{ $course['name'] }}</h3>
+                                        <span class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $course['enrollments_count'] > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                            {{ $course['enrollments_count'] }} {{ __('students') }}
+                                        </span>
                                     </div>
-                                </div>
+
+                                    <div class="space-y-1.5 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                        <p>
+                                            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ __('Teacher') }}:</span>
+                                            {{ $course['teacher'] }}
+                                        </p>
+
+                                        <p>
+                                            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ __('Room') }}:</span>
+                                            {{ $course['room'] ?? '-' }}
+                                        </p>
+
+                                        @if ($course['schedule'])
+                                            <p>
+                                                <span class="font-semibold text-gray-900 dark:text-gray-100">{{ __('Schedule') }}:</span>
+                                                {{ $course['schedule'] }}
+                                            </p>
+                                        @endif
+
+                                        <p class="text-gray-600 dark:text-gray-400">
+                                            {{ $course['start_date'] }} — {{ $course['end_date'] }}
+                                        </p>
+
+                                        <div class="flex items-center justify-between pt-1">
+                                            @if ($course['volume'])
+                                                <span class="text-gray-600 dark:text-gray-400">{{ $course['volume'] }}h</span>
+                                            @endif
+
+                                            @if ($course['spots'])
+                                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                                    {{ $course['spots'] - $course['enrollments_count'] }} {{ __('spots left') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
                             </a>
                         </div>
                     @endforeach

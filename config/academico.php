@@ -13,10 +13,11 @@ return [
  * available languages
  */
 
-    'languages' => ['fr', 'en', 'es'],
+    // 'languages' => ['fr', 'en', 'es'], // original - disabled for now to leave only English
+    'languages' => ['en'],
 
-    'currency_symbol' => env('CURRENCY_SYMBOL', '€'),
-    'currency_code' => env('CURRENCY_CODE', 'EUR'),
+    'currency_symbol' => env('CURRENCY_SYMBOL', 'UZS'),
+    'currency_code' => env('CURRENCY_CODE', 'UZS'),
     'currency_position' => env('CURRENCY_POSITION', 'after'),
 
     'books_module' => env('BOOKS_MODULE_ENABLED', false),

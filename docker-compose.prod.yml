@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: academico-filament-app
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "8081:80"
+    volumes:
+      - ./storage:/app/storage
+      - ./database:/app/database
+      - ./.env:/app/.env
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - academico-network
+    environment:
+      - SERVER_NAME=:80
+
+networks:
+  academico-network:
+    driver: bridge

@@ -51,6 +51,11 @@ class CourseTime extends Model
 
     public function createEvents()
     {
+        // Guard against missing course dates (schedule is optional per request)
+        if (! $this->course->start_date || ! $this->course->end_date) {
+            return;
+        }
+
         $today = Carbon::parse($this->course->start_date)->startOfDay();
         $end = Carbon::parse($this->course->end_date)->endOfDay();
 

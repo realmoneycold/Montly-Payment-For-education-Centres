@@ -17,6 +17,14 @@ class CalendarCombined extends Page
         return auth()->user()?->can('calendars.view') ?? false;
     }
 
+    // Temporarily hidden from navigation (kept for future re-enable)
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Temporarily disabled - remove this method entirely in future to re-enable
+        // return auth()->user()?->can('calendars.view') ?? false;
+        return false;
+    }
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 
     protected static ?int $navigationSort = 400;
@@ -159,9 +167,16 @@ class CalendarCombined extends Page
             ->toArray();
     }
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Organization');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Organization');
+        // Temporarily moved out of side navigation (kept for future)
+        return null;
     }
 
     public static function getNavigationLabel(): string

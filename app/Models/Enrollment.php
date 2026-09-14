@@ -239,6 +239,11 @@ class Enrollment extends Model implements InvoiceableModel
         return $this->hasMany(ScheduledPayment::class);
     }
 
+    public function monthlyPayments(): HasMany
+    {
+        return $this->hasMany(MonthlyPaymentRecord::class);
+    }
+
     public function saveScheduledPayments($payments)
     {
         $paymentsToDelete = $this->scheduledPayments()->pluck('id')->diff($payments->pluck('id'));

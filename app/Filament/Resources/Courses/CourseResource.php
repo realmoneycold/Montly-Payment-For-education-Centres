@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Courses;
 
 use App\Filament\Exports\CourseExporter;
+use App\Filament\Pages\CourseAttendance;
 use App\Filament\Pages\GradeEdit;
+use App\Filament\Pages\MonthlyPayment;
 use App\Filament\Pages\SkillEvaluationPage;
 use App\Filament\Resources\Courses\Pages\CourseBlockView;
 use App\Filament\Resources\Courses\Pages\CourseEnrollments;
@@ -24,16 +26,17 @@ use Filament\Actions\ExportBulkAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Support\RawJs;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -67,196 +70,149 @@ class CourseResource extends Resource
     {
         return $schema
             ->components([
-                Tabs::make('Course')
+                // Temporarily replaced multi-tab layout with single Course Info section
+                // (original 5 tabs: Course info / Resources / Pedagogy / Submodules / Schedule
+                //  kept below commented for future re-enable)
+                Section::make(__('Course info'))
+                    ->columns(3)
                     ->columnSpanFull()
-                    ->tabs([
-                        Tab::make(__('Course info'))
-                            ->schema([
-                                Select::make('rhythm_id')
-                                    ->label(__('Rhythm'))
-                                    ->relationship('rhythm', 'name')
-                                    ->required()
-                                    ->preload()
-                                    ->searchable(),
-                                Select::make('level_id')
-                                    ->label(__('Level'))
-                                    ->relationship('level', 'name')
-                                    ->preload()
-                                    ->searchable()
-                                    ->nullable(),
-                                TextInput::make('name')
-                                    ->label(__('Name'))
-                                    ->required()
-                                    ->minLength(1)
-                                    ->maxLength(100),
-                                TextInput::make('price')
-                                    ->label(__('Price'))
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step(0.01)
-                                    ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
-                                    ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null),
-                                TextInput::make('price_b')
-                                    ->label(__('Price B'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step(0.01)
-                                    ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
-                                    ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null)
-                                    ->visible(fn (): bool => (bool) config('invoicing.price_categories_enabled')),
-                                TextInput::make('price_c')
-                                    ->label(__('Price C'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step(0.01)
-                                    ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
-                                    ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null)
-                                    ->visible(fn (): bool => (bool) config('invoicing.price_categories_enabled')),
-                                TextInput::make('volume')
-                                    ->label(__('Volume'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->suffix('h')
-                                    ->nullable(),
-                                TextInput::make('remote_volume')
-                                    ->label(__('Remote volume'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->suffix('h')
-                                    ->nullable(),
-                                TextInput::make('spots')
-                                    ->label(__('Spots'))
-                                    ->required()
-                                    ->integer()
-                                    ->minValue(0),
-                                Checkbox::make('exempt_attendance')
-                                    ->label(__('Exempt from attendance')),
-                                ColorPicker::make('color')
-                                    ->label(__('Color'))
-                                    ->nullable(),
-                            ]),
+                    ->schema([
+                        // === Fields kept from original "Course info" tab ===
+                        // Rhythm - REMOVED per request (kept commented for future)
+                        // Select::make('rhythm_id')
+                        //     ->label(__('Rhythm'))
+                        //     ->relationship('rhythm', 'name')
+                        //     ->required()
+                        //     ->preload()
+                        //     ->searchable(),
+                        Select::make('level_id')
+                            ->label(__('Level'))
+                            ->relationship('level', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->nullable(),
+                        TextInput::make('name')
+                            ->label(__('Name'))
+                            ->required()
+                            ->minLength(1)
+                            ->maxLength(100)
+                            ->columnSpan(2),
+                        TextInput::make('price')
+                            ->label(__('Price'))
+                            ->required()
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step(1)
+                            ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
+                            ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null),
+                        TextInput::make('price_b')
+                            ->label(__('Price B'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
+                            ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null)
+                            ->visible(fn (): bool => (bool) config('invoicing.price_categories_enabled')),
+                        TextInput::make('price_c')
+                            ->label(__('Price C'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->prefix(config('academico.currency_position') === 'before' ? config('academico.currency_symbol') : null)
+                            ->suffix(config('academico.currency_position') === 'after' ? config('academico.currency_symbol') : null)
+                            ->visible(fn (): bool => (bool) config('invoicing.price_categories_enabled')),
+                        // Volume - REMOVED per request (kept commented for future)
+                        // TextInput::make('volume')
+                        //     ->label(__('Volume'))
+                        //     ->numeric()
+                        //     ->minValue(0)
+                        //     ->suffix('h')
+                        //     ->nullable(),
+                        // Remote volume - REMOVED per request (kept commented for future)
+                        // TextInput::make('remote_volume')
+                        //     ->label(__('Remote volume'))
+                        //     ->numeric()
+                        //     ->minValue(0)
+                        //     ->suffix('h')
+                        //     ->nullable(),
+                        // Spots - REMOVED per request (kept commented for future)
+                        // TextInput::make('spots')
+                        //     ->label(__('Spots'))
+                        //     ->required()
+                        //     ->integer()
+                        //     ->minValue(0),
+                        // Exempt from attendance - REMOVED per request (kept commented for future)
+                        // Checkbox::make('exempt_attendance')
+                        //     ->label(__('Exempt from attendance')),
+                        // Color - REMOVED per request (kept commented for future)
+                        // ColorPicker::make('color')
+                        //     ->label(__('Color'))
+                        //     ->nullable(),
 
-                        Tab::make(__('Resources'))
-                            ->schema([
-                                Select::make('teacher_id')
-                                    ->label(__('Teacher'))
-                                    ->relationship('teacher', 'id')
-                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
-                                    ->searchable()
-                                    ->preload()
-                                    ->nullable(),
-                                Select::make('room_id')
-                                    ->label(__('Room'))
-                                    ->relationship('room', 'name')
-                                    ->preload()
-                                    ->nullable(),
-                            ]),
+                        // === Fields kept from original "Resources" tab ===
+                        TextInput::make('teacher_name')
+                            ->label(__('Teacher name'))
+                            ->maxLength(255)
+                            ->nullable(),
+                        // Room - REMOVED per request (kept commented for future)
+                        // Select::make('room_id')
+                        //     ->label(__('Room'))
+                        //     ->relationship('room', 'name')
+                        //     ->preload()
+                        //     ->nullable(),
 
-                        Tab::make(__('Pedagogy'))
-                            ->schema([
-                                Select::make('books')
-                                    ->label(__('Books'))
-                                    ->relationship('books', 'name')
-                                    ->multiple()
-                                    ->preload()
-                                    ->searchable(),
-                                Select::make('evaluation_type_id')
-                                    ->label(__('Evaluation Type'))
-                                    ->relationship('evaluationType', 'name')
-                                    ->preload()
-                                    ->nullable(),
-                                Checkbox::make('marked')
-                                    ->label(__('Evaluation ready'))
-                                    ->visibleOn('edit'),
-                            ]),
+                        // === Fields kept from original "Pedagogy" tab ===
+                        // Books - REMOVED per request (kept commented for future)
+                        // Select::make('books')
+                        //     ->label(__('Books'))
+                        //     ->relationship('books', 'name')
+                        //     ->multiple()
+                        //     ->preload()
+                        //     ->searchable(),
+                        // Evaluation Type - REMOVED per request (kept commented for future)
+                        // Select::make('evaluation_type_id')
+                        //     ->label(__('Evaluation Type'))
+                        //     ->relationship('evaluationType', 'name')
+                        //     ->preload()
+                        //     ->nullable(),
+                        Checkbox::make('marked')
+                            ->label(__('Evaluation ready'))
+                            ->visibleOn('edit')
+                            ->columnSpanFull(),
 
-                        Tab::make(__('Submodules'))
-                            ->schema([
-                                Repeater::make('children')
-                                    ->relationship()
-                                    ->label(__('Submodules'))
-                                    ->schema([
-                                        TextInput::make('name')
-                                            ->label(__('Name'))
-                                            ->required()
-                                            ->maxLength(100),
-                                        Select::make('level_id')
-                                            ->label(__('Level'))
-                                            ->relationship('level', 'name')
-                                            ->preload()
-                                            ->searchable()
-                                            ->nullable(),
-                                        TextInput::make('volume')
-                                            ->label(__('Volume'))
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->suffix('h')
-                                            ->nullable(),
-                                    ])
-                                    ->columns(3)
-                                    ->defaultItems(0)
-                                    ->reorderable(false)
-                                    ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $livewire): array {
-                                        $parent = $livewire->getRecord();
-                                        $data['period_id'] = $parent->period_id;
-                                        $data['teacher_id'] = $parent->teacher_id;
-                                        $data['room_id'] = $parent->room_id;
-                                        $data['start_date'] = $parent->start_date;
-                                        $data['end_date'] = $parent->end_date;
-                                        $data['price'] = $parent->price;
-                                        $data['rhythm_id'] = $parent->rhythm_id;
-                                        $data['spots'] = $parent->spots;
-
-                                        return $data;
-                                    }),
-                            ])
+                        Placeholder::make(__('Note: if you modify the course dates later, existing attendance for this course will be lost.'))
+                            ->columnSpanFull()
                             ->visibleOn('edit'),
-
-                        Tab::make(__('Schedule'))
-                            ->schema([
-                                TextEntry::make(__('Please be aware that if you modify the course dates, the existing attendance for this course will be lost!'))
-                                    ->columnSpanFull()
-                                    ->visibleOn('edit'),
-                                Select::make('period_id')
-                                    ->label(__('Period'))
-                                    ->relationship('period', 'name')
-                                    ->default(fn (): ?int => Period::get_default_period()?->id)
-                                    ->required()
-                                    ->preload()
-                                    ->searchable(),
-                                DatePicker::make('start_date')
-                                    ->label(__('Start Date'))
-                                    ->required(),
-                                DatePicker::make('end_date')
-                                    ->label(__('End Date'))
-                                    ->required(),
-                                Repeater::make('courseTimes')
-                                    ->relationship('times')
-                                    ->label(__('Recurring schedule'))
-                                    ->schema([
-                                        Select::make('day')
-                                            ->options([
-                                                0 => __('Sunday'),
-                                                1 => __('Monday'),
-                                                2 => __('Tuesday'),
-                                                3 => __('Wednesday'),
-                                                4 => __('Thursday'),
-                                                5 => __('Friday'),
-                                                6 => __('Saturday'),
-                                            ])
-                                            ->required(),
-                                        TimePicker::make('start')
-                                            ->required()
-                                            ->seconds(false),
-                                        TimePicker::make('end')
-                                            ->required()
-                                            ->seconds(false),
-                                    ])
-                                    ->columns(3)
-                                    ->defaultItems(0)
-                                    ->reorderable(false),
-                            ]),
+                        DatePicker::make('start_date')
+                            ->label(__('Start Date'))
+                            ->nullable(),
+                        DatePicker::make('end_date')
+                            ->label(__('End Date'))
+                            ->nullable(),
+                        Select::make('schedule_days')
+                            ->label(__('Days'))
+                            ->options([
+                                0 => __('Sunday'),
+                                1 => __('Monday'),
+                                2 => __('Tuesday'),
+                                3 => __('Wednesday'),
+                                4 => __('Thursday'),
+                                5 => __('Friday'),
+                                6 => __('Saturday'),
+                            ])
+                            ->multiple()
+                            ->searchable()
+                            ->nullable(),
+                        TimePicker::make('schedule_start')
+                            ->label(__('Start'))
+                            ->seconds(false)
+                            ->nullable(),
+                        TimePicker::make('schedule_end')
+                            ->label(__('End'))
+                            ->seconds(false)
+                            ->nullable(),
                     ]),
             ]);
     }
@@ -279,7 +235,7 @@ class CourseResource extends Resource
                 // Mobile: stacked details (teacher, room, schedule)
                 TextColumn::make('mobile_details')
                     ->label(__('Details'))
-                    ->state(fn ($record) => $record->teacher?->name)
+                    ->state(fn ($record) => $record->course_teacher_name)
                     ->description(fn ($record) => collect([$record->room?->name, $record->course_times])->filter()->implode(' · '))
                     ->wrap()
                     ->hiddenFrom('md'),
@@ -291,78 +247,83 @@ class CourseResource extends Resource
                     ->sortable(query: fn ($query, $direction) => $query->orderBy('start_date', $direction))
                     ->hiddenFrom('md'),
                 // Desktop columns
-                TextColumn::make('rhythm.name')
-                    ->label(__('Rhythm'))
-                    ->sortable()
-                    ->visibleFrom('md'),
+                // TextColumn::make('rhythm.name')
+                //     ->label(__('Rhythm'))
+                //     ->sortable()
+                //     ->visibleFrom('md'),
                 TextColumn::make('level.name')
                     ->label(__('Level'))
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->size(\Filament\Support\Enums\TextSize::Large)
                     ->sortable()
                     ->visibleFrom('md'),
                 TextColumn::make('name')
                     ->label(__('Name'))
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->size(\Filament\Support\Enums\TextSize::Large)
                     ->searchable()
                     ->sortable()
                     ->wrap()
                     ->width('200px')
                     ->visibleFrom('md'),
-                TextColumn::make('volume')
-                    ->label(__('Volume'))
-                    ->suffix('h')
-                    ->sortable()
-                    ->toggleable()
-                    ->visibleFrom('md'),
-                TextColumn::make('remote_volume')
-                    ->label(__('Remote volume'))
-                    ->suffix('h')
-                    ->sortable()
-                    ->toggleable()
-                    ->visibleFrom('lg'),
-                TextColumn::make('teacher.name')
+                // TextColumn::make('volume')
+                //     ->label(__('Volume'))
+                //     ->suffix('h')
+                //     ->sortable()
+                //     ->toggleable()
+                //     ->visibleFrom('md'),
+                // TextColumn::make('remote_volume')
+                //     ->label(__('Remote volume'))
+                //     ->suffix('h')
+                //     ->sortable()
+                //     ->toggleable()
+                //     ->visibleFrom('lg'),
+                TextColumn::make('course_teacher_name')
                     ->label(__('Teacher'))
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->size(\Filament\Support\Enums\TextSize::Large)
                     ->sortable()
-                    ->toggleable()
                     ->wrap()
                     ->width('200px')
                     ->visibleFrom('md'),
-                TextColumn::make('room.name')
-                    ->label(__('Room'))
-                    ->sortable()
-                    ->toggleable()
-                    ->visibleFrom('lg'),
+                // TextColumn::make('room.name')
+                //     ->label(__('Room'))
+                //     ->sortable()
+                //     ->toggleable()
+                //     ->visibleFrom('lg'),
                 TextColumn::make('course_times')
                     ->label(__('Schedule'))
-                    ->toggleable()
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->size(\Filament\Support\Enums\TextSize::Large)
                     ->wrap()
                     ->width('200px')
                     ->visibleFrom('lg'),
                 TextColumn::make('course_enrollments_count')
                     ->label(__('Enrollments'))
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->size(\Filament\Support\Enums\TextSize::Large)
                     ->sortable()
-                    ->toggleable()
                     ->visibleFrom('md'),
                 TextColumn::make('start_date')
                     ->label(__('Start Date'))
                     ->date()
                     ->sortable()
-                    ->toggleable()
                     ->visibleFrom('md'),
                 TextColumn::make('end_date')
                     ->label(__('End Date'))
                     ->date()
                     ->sortable()
-                    ->toggleable()
                     ->visibleFrom('lg'),
                 IconColumn::make('parent_course_id')
                     ->label('')
                     ->icon(fn ($state) => $state ? 'heroicon-o-arrow-uturn-left' : null)
                     ->tooltip(__('Submodule'))
-                    ->toggleable(isToggledHiddenByDefault: true),
-                IconColumn::make('marked')
-                    ->boolean()
-                    ->label(__('Evaluation complete'))
-                    ->toggleable()
-                    ->visibleFrom('md'),
+                    ->hidden(),
+                // IconColumn::make('marked')
+                //     ->boolean()
+                //     ->label(__('Evaluation complete'))
+                //     ->toggleable()
+                //     ->visibleFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('period_id')
@@ -373,12 +334,6 @@ class CourseResource extends Resource
                 SelectFilter::make('rhythm_id')
                     ->relationship('rhythm', 'name')
                     ->label(__('Rhythm'))
-                    ->preload(),
-                SelectFilter::make('teacher_id')
-                    ->relationship('teacher', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
-                    ->label(__('Teacher'))
-                    ->searchable()
                     ->preload(),
                 SelectFilter::make('level_id')
                     ->relationship('level', 'name')
@@ -392,9 +347,20 @@ class CourseResource extends Resource
                     ),
             ])
             ->defaultSort('start_date', 'desc')
+            ->recordUrl(fn ($record): string => MonthlyPayment::getUrl(['courseId' => $record->id]))
+            ->actionsPosition(\Filament\Tables\Enums\RecordActionsPosition::BeforeColumns)
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    Action::make('monthly_payment')
+                        ->label(__('Monthly Payment'))
+                        ->icon('heroicon-o-banknotes')
+                        ->color('success')
+                        ->url(fn ($record) => MonthlyPayment::getUrl(['courseId' => $record->id])),
+                    Action::make('view_attendance')
+                        ->label(__('View Attendance'))
+                        ->icon('heroicon-o-table-cells')
+                        ->url(fn ($record) => CourseAttendance::getUrl(['courseId' => $record->id])),
                     Action::make('view_enrollments')
                         ->label(__('View Enrollments'))
                         ->icon('heroicon-o-academic-cap')

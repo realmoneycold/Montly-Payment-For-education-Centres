@@ -40,14 +40,24 @@ class EnrollmentResource extends Resource
 
     protected static ?int $navigationSort = 210;
 
+    // Hidden from navigation per request (keep for future re-enable)
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         return auth()->user()?->can('enrollments.view') ?? false;
     }
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Administration');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Administration');
+        // Temporarily ungrouped (flat sidebar list, no slide collapse button)
+        return null;
     }
 
     public static function getModelLabel(): string

@@ -38,9 +38,21 @@ class TeacherResource extends Resource
         return auth()->user()?->can('hr.view') ?? false;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Organization');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Organization');
+        // Temporarily ungrouped (flat sidebar list, no slide collapse button)
+        return null;
     }
 
     public static function getModelLabel(): string

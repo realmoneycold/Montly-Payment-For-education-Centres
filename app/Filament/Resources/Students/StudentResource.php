@@ -9,11 +9,14 @@ use App\Filament\Resources\Students\Pages\EnrollStudent;
 use App\Filament\Resources\Students\Pages\ListStudents;
 use App\Filament\Resources\Students\Pages\ViewStudent;
 use App\Filament\Resources\Students\RelationManagers\ContactsRelationManager;
-use App\Filament\Resources\Students\RelationManagers\EnrollmentsRelationManager;
+use App\Filament\Resources\Students\RelationManagers\MonthlyPaymentsRelationManager;
+use App\Models\Course;
+use App\Models\Institution;
 use App\Models\Period;
 use App\Models\Student;
 use BackedEnum;
 use Carbon\Carbon;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -22,11 +25,10 @@ use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -38,6 +40,8 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Gate;
 
 class StudentResource extends Resource
 {
@@ -52,9 +56,16 @@ class StudentResource extends Resource
 
     protected static ?int $navigationSort = 200;
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Administration');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Administration');
+        // Temporarily ungrouped (flat sidebar list, no slide collapse button)
+        return null;
     }
 
     public static function getModelLabel(): string
@@ -75,52 +86,33 @@ class StudentResource extends Resource
                     ->columns(2)
                     ->schema([
                         TextEntry::make('name')
-                            ->label(__('Name')),
-                        TextEntry::make('user.email')
-                            ->label(__('Email')),
-                        TextEntry::make('idnumber')
-                            ->label(__('ID Number'))
-                            ->placeholder('-'),
-                        TextEntry::make('user.username')
-                            ->label(__('Username'))
-                            ->placeholder('-'),
+                            ->label(__('Name'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large),
                         TextEntry::make('user.birthdate')
                             ->label(__('Birthdate'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large)
                             ->date(),
                         TextEntry::make('student_age')
-                            ->label(__('Age')),
+                            ->label(__('Age'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large),
                         TextEntry::make('formatted_gender')
                             ->label(__('Gender'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large)
                             ->placeholder('-'),
                         TextEntry::make('phone.phone_number')
                             ->label(__('Phone'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large)
                             ->badge()
-                            ->placeholder('-'),
-                        TextEntry::make('profession.name')
-                            ->label(__('Profession'))
                             ->placeholder('-'),
                         TextEntry::make('institution.name')
                             ->label(__('Institution'))
-                            ->placeholder('-'),
-                    ]),
-                Section::make(__('Address'))
-                    ->columns(2)
-                    ->collapsible()
-                    ->schema([
-                        TextEntry::make('address')
-                            ->label(__('Address'))
-                            ->placeholder('-'),
-                        TextEntry::make('city')
-                            ->label(__('City'))
-                            ->placeholder('-'),
-                        TextEntry::make('zip_code')
-                            ->label(__('zip'))
-                            ->placeholder('-'),
-                        TextEntry::make('state')
-                            ->label(__('State'))
-                            ->placeholder('-'),
-                        TextEntry::make('country')
-                            ->label(__('Country'))
+                            ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                            ->size(\Filament\Support\Enums\TextSize::Large)
                             ->placeholder('-'),
                     ]),
             ]);
@@ -135,6 +127,35 @@ class StudentResource extends Resource
                     ->tabs([
                         Tab::make(__('Student Info'))
                             ->schema([
+                                Select::make('course_id')
+                                    ->label(__('Group'))
+                                    ->options(function (): array {
+                                        $courses = Course::query()
+                                            ->whereNull('parent_course_id');
+
+                                        $defaultPeriodId = Period::get_default_period()?->id;
+                                        $courseId = request()->query('course_id');
+
+                                        $courses->where(function ($query) use ($defaultPeriodId, $courseId) {
+                                            if ($defaultPeriodId) {
+                                                $query->where('period_id', $defaultPeriodId);
+                                            }
+                                            if ($courseId) {
+                                                $query->orWhere('id', $courseId);
+                                            }
+                                        });
+
+                                        return $courses->orderBy('name')
+                                            ->get()
+                                            ->mapWithKeys(fn (Course $course): array => [
+                                                $course->id => $course->name,
+                                            ])
+                                            ->all();
+                                    })
+                                    ->default(fn (): ?int => request()->integer('course_id') ?: null)
+                                    ->searchable()
+                                    ->preload()
+                                    ->nullable(),
                                 TextInput::make('firstname')
                                     ->label(__('First name'))
                                     ->required()
@@ -143,85 +164,33 @@ class StudentResource extends Resource
                                     ->label(__('Last name'))
                                     ->required()
                                     ->maxLength(30),
-                                TextInput::make('email')
-                                    ->label(__('Email'))
-                                    ->email()
-                                    ->nullable()
-                                    ->maxLength(60),
-                                TextInput::make('idnumber')
-                                    ->label(__('ID Number'))
-                                    ->nullable(),
                                 DatePicker::make('birthdate')
                                     ->label(__('Birthdate'))
                                     ->nullable(),
                                 Radio::make('gender_id')
                                     ->label(__('Gender'))
                                     ->options([
-                                        0 => __('Other'),
                                         1 => __('Female'),
                                         2 => __('Male'),
                                     ])
                                     ->required()
-                                    ->default(0)
                                     ->inline(),
-                                SpatieMediaLibraryFileUpload::make('profile_picture')
-                                    ->label(__('Profile Picture'))
-                                    ->collection('profile-picture')
-                                    ->conversion('thumb')
-                                    ->image()
-                                    ->nullable(),
-                                Select::make('profession_id')
-                                    ->label(__('Profession'))
-                                    ->relationship('profession', 'name')
-                                    ->preload()
-                                    ->searchable()
-                                    ->createOptionForm([
-                                        TextInput::make('name')->required(),
-                                    ])
+                                TextInput::make('phone_number')
+                                    ->label(__('Phone number'))
+                                    ->tel()
                                     ->nullable(),
                                 Select::make('institution_id')
                                     ->label(__('Institution'))
-                                    ->relationship('institution', 'name')
-                                    ->preload()
+                                    ->options(fn (): array => collect([
+                                        'School',
+                                        'College',
+                                        'Institution',
+                                        "Doesn't study anywhere",
+                                    ])->mapWithKeys(fn (string $name): array => [
+                                        Institution::firstOrCreate(['name' => $name])->id => __($name),
+                                    ])->all())
                                     ->searchable()
-                                    ->createOptionForm([
-                                        TextInput::make('name')->required(),
-                                    ])
                                     ->nullable(),
-                                Repeater::make('phone')
-                                    ->relationship()
-                                    ->label(__('Phone numbers'))
-                                    ->schema([
-                                        TextInput::make('phone_number')
-                                            ->label(__('Phone number'))
-                                            ->required(),
-                                    ])
-                                    ->defaultItems(0)
-                                    ->reorderable(false),
-                            ]),
-
-                        Tab::make(__('Address'))
-                            ->schema([
-                                TextInput::make('address')
-                                    ->label(__('Address'))
-                                    ->nullable()
-                                    ->maxLength(60),
-                                TextInput::make('zip_code')
-                                    ->label(__('zip'))
-                                    ->nullable()
-                                    ->maxLength(10),
-                                TextInput::make('city')
-                                    ->label(__('City'))
-                                    ->nullable()
-                                    ->maxLength(30),
-                                TextInput::make('state')
-                                    ->label(__('State'))
-                                    ->nullable()
-                                    ->maxLength(30),
-                                TextInput::make('country')
-                                    ->label(__('Country'))
-                                    ->nullable()
-                                    ->maxLength(20),
                             ]),
 
                         Tab::make(__('Invoicing Info'))
@@ -244,20 +213,21 @@ class StudentResource extends Resource
     {
         return $table
             ->columns([
-                // Mobile: stacked student info (name + email · phone)
+                // Mobile: stacked student info (name + phone)
                 TextColumn::make('mobile_name')
                     ->label(__('Student'))
                     ->state(fn ($record) => $record->user?->lastname.', '.$record->user?->firstname)
-                    ->description(fn ($record) => collect([$record->user?->email, $record->phone->first()?->phone_number])->filter()->implode(' · '))
-                    ->searchable(query: fn ($query, $search) => $query->whereHas('user', fn ($q) => $q->where('lastname', 'like', "%{$search}%")->orWhere('firstname', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
+                    ->description(fn ($record) => collect([/* $record->user?->email, */ $record->phone->first()?->phone_number])->filter()->implode(' · ')) // Email commented out for now (future: remove comment)
+                    ->searchable(query: fn ($query, $search) => $query->whereHas('user', fn ($q) => $q->where('lastname', 'like', "%{$search}%")->orWhere('firstname', 'like', "%{$search}%")/* ->orWhere('email', 'like', "%{$search}%") */)) // Email search disabled for now
                     ->sortable(query: fn ($query, $direction) => $query->join('users', 'students.user_id', '=', 'users.id')->orderBy('users.lastname', $direction))
                     ->wrap()
                     ->hiddenFrom('md'),
                 // Desktop columns
-                TextColumn::make('idnumber')
-                    ->label(__('ID'))
-                    ->searchable()
-                    ->visibleFrom('md'),
+                // ID column temporarily removed per request (keep for future re-enable):
+                // TextColumn::make('idnumber')
+                //     ->label(__('ID'))
+                //     ->searchable()
+                //     ->visibleFrom('md'),
                 TextColumn::make('user.lastname')
                     ->label(__('Last name'))
                     ->searchable()
@@ -268,12 +238,13 @@ class StudentResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->visibleFrom('md'),
-                TextColumn::make('user.email')
-                    ->label(__('Email'))
-                    ->wrap()
-                    ->width('180px')
-                    ->searchable()
-                    ->visibleFrom('md'),
+                // Email column temporarily removed (kept for future re-enable - remove comments below)
+                // TextColumn::make('user.email')
+                //     ->label(__('Email'))
+                //     ->wrap()
+                //     ->width('180px')
+                //     ->searchable()
+                //     ->visibleFrom('md'),
                 TextColumn::make('user.username')
                     ->label(__('Username'))
                     ->searchable()
@@ -361,6 +332,45 @@ class StudentResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('enroll_in_group')
+                        ->label(__('Enroll in group'))
+                        ->icon('heroicon-o-user-group')
+                        ->form([
+                            Select::make('course_id')
+                                ->label(__('Group'))
+                                ->options(function (): array {
+                                    $periodId = Period::get_default_period()?->id;
+
+                                    return Course::query()
+                                        ->when($periodId, fn (Builder $query) => $query->where('period_id', $periodId))
+                                        ->whereNull('parent_course_id')
+                                        ->with('level')
+                                        ->orderBy('name')
+                                        ->get()
+                                        ->mapWithKeys(fn (Course $course): array => [
+                                            $course->id => $course->name.($course->level?->name ? ' - '.$course->level->name : ''),
+                                        ])
+                                        ->all();
+                                })
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                        ])
+                        ->requiresConfirmation()
+                        ->action(function (array $data, Collection $records): void {
+                            $course = Course::findOrFail($data['course_id']);
+                            $records->each(fn (Student $student): int => $student->enroll($course));
+
+                            Notification::make()
+                                ->title(__('Students enrolled successfully'))
+                                ->body(__(':count students were added to :group.', [
+                                    'count' => $records->count(),
+                                    'group' => $course->name,
+                                ]))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn (): bool => Gate::allows('enroll-students')),
                     ExportBulkAction::make()
                         ->exporter(StudentExporter::class),
                     DeleteBulkAction::make(),
@@ -372,7 +382,7 @@ class StudentResource extends Resource
     {
         return [
             ContactsRelationManager::class,
-            EnrollmentsRelationManager::class,
+            MonthlyPaymentsRelationManager::class,
         ];
     }
 

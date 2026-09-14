@@ -17,6 +17,14 @@ class AttendanceMonitor extends Page
 
     protected static ?int $navigationSort = 220;
 
+    // Temporarily hidden from navigation (kept for future re-enable)
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Temporarily disabled - remove this method entirely in future to re-enable
+        // return auth()->user()?->can('reports.view') ?? false;
+        return false;
+    }
+
     protected string $view = 'filament.pages.attendance-monitor';
 
     public static function canAccess(): bool
@@ -151,9 +159,16 @@ class AttendanceMonitor extends Page
         $this->coursesData = collect($coursesdata)->sortByDesc('missing')->values()->toArray();
     }
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Administration');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Administration');
+        // Temporarily moved out of side navigation (kept for future)
+        return null;
     }
 
     public static function getNavigationLabel(): string

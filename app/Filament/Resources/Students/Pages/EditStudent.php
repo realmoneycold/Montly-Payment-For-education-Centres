@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Students\Pages;
 
 use App\Filament\Resources\Students\StudentResource;
+use App\Models\Course;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\RelationManagers\RelationManagerConfiguration;
@@ -28,7 +29,11 @@ class EditStudent extends EditRecord
 
         $data['firstname'] = $user?->firstname ?? '';
         $data['lastname'] = $user?->lastname ?? '';
-        $data['email'] = $user?->email ?? '';
+        $data['phone_number'] = $this->record->phone->first()?->phone_number;
+        $data['course_id'] = $this->record->enrollments()
+            ->whereNull('parent_id')
+            ->latest('created_at')
+            ->value('course_id');
 
         return $data;
     }
@@ -51,14 +56,14 @@ class EditStudent extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        $courseId = $data['course_id'] ?? null;
+
         $record->user->update([
             'firstname' => $data['firstname'],
             'lastname' => $data['lastname'],
-            'email' => $data['email'] ?? null,
         ]);
 
         $record->update([
-            'idnumber' => $data['idnumber'] ?? null,
             'birthdate' => $data['birthdate'] ?? null,
             'gender_id' => $data['gender_id'],
             'address' => $data['address'] ?? null,
@@ -68,9 +73,17 @@ class EditStudent extends EditRecord
             'country' => $data['country'] ?? null,
             'iban' => $data['iban'] ?? null,
             'bic' => $data['bic'] ?? null,
-            'profession_id' => $data['profession_id'] ?? null,
             'institution_id' => $data['institution_id'] ?? null,
         ]);
+
+        $this->record->phone()->delete();
+        if (filled($data['phone_number'] ?? null)) {
+            $this->record->phone()->create(['phone_number' => $data['phone_number']]);
+        }
+
+        if (filled($courseId) && ! $record->enrollments()->where('course_id', $courseId)->exists()) {
+            $record->enroll(Course::findOrFail($courseId));
+        }
 
         return $record;
     }

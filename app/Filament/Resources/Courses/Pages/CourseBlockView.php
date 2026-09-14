@@ -95,7 +95,7 @@ class CourseBlockView extends Page
                 'has_teacher' => $course->teacher_id !== null,
                 'has_room' => $course->room_id !== null,
                 'edit_url' => CourseResource::getUrl('edit', ['record' => $course->id]),
-                'enrollments_url' => CourseResource::getUrl('enrollments', ['record' => $course->id]),
+                'enrollments_url' => \App\Filament\Pages\MonthlyPayment::getUrl(['courseId' => $course->id]),
             ])
             ->toArray();
     }

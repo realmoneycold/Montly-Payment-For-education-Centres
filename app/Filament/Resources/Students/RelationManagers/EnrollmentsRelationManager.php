@@ -16,6 +16,11 @@ class EnrollmentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'enrollments';
 
+    public static function getTitle(mixed $ownerRecord, string $pageClass): string
+    {
+        return __('Monthly Payments');
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -34,52 +39,51 @@ class EnrollmentsRelationManager extends RelationManager
                 TextColumn::make('course.name')
                     ->label(__('Course'))
                     ->searchable(),
-                TextColumn::make('course.period.name')
-                    ->label(__('Period')),
+                // TextColumn::make('course.period.name')
+                //     ->label(__('Period')),
                 TextColumn::make('course.teacher.name')
                     ->label(__('Teacher')),
                 TextColumn::make('enrollmentStatus.name')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($record): ?array => $record->enrollmentStatus?->color ? Color::hex($record->enrollmentStatus->color) : null),
-                TextColumn::make('result.result_name.name')
-                    ->label(__('Result'))
-                    ->placeholder(__('N/A')),
-                TextColumn::make('attendance_ratio')
-                    ->label(__('Attendance'))
-                    ->state(fn ($record): string => $record->attendance_ratio !== null ? $record->attendance_ratio.'%' : __('N/A'))
-                    ->badge()
-                    ->color(fn ($record): string => match (true) {
-                        $record->attendance_ratio === null => 'gray',
-                        $record->attendance_ratio >= 80 => 'success',
-                        $record->attendance_ratio >= 50 => 'warning',
-                        default => 'danger',
-                    }),
+                // TextColumn::make('result.result_name.name')
+                //     ->label(__('Result'))
+                //     ->placeholder(__('N/A')),
+                // TextColumn::make('attendance_ratio')
+                //     ->label(__('Attendance'))
+                //     ->state(fn ($record): string => $record->attendance_ratio !== null ? $record->attendance_ratio.'%' : __('N/A'))
+                //     ->badge()
+                //     ->color(fn ($record): string => match (true) {
+                //         $record->attendance_ratio === null => 'gray',
+                //         $record->attendance_ratio >= 80 => 'success',
+                //         $record->attendance_ratio >= 50 => 'warning',
+                //         default => 'danger',
+                //     }),
                 TextColumn::make('total_price')
                     ->label(__('Price'))
                     ->money(config('academico.currency_code', 'USD'))
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->hidden(),
                 TextColumn::make('student.student_age')
                     ->label(__('Age'))
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->hidden(),
                 TextColumn::make('student.user.birthdate')
                     ->label(__('Birthdate'))
                     ->date()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->hidden(),
                 TextColumn::make('student.phone.phone_number')
                     ->label(__('Phone'))
                     ->badge()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->hidden(),
                 TextColumn::make('created_at')
-                    ->label(__('Enrolled'))
-                    ->date()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label(__('Month'))
+                    ->date('F Y'),
             ])
-            ->defaultGroup(
-                Group::make('course.period.name')
-                    ->label(__('Period'))
-                    ->collapsible()
-            )
+            // ->defaultGroup(
+            //     Group::make('course.period.name')
+            //         ->label(__('Period'))
+            //         ->collapsible()
+            // )
             ->recordUrl(fn ($record) => EnrollmentResource::getUrl('view', ['record' => $record]))
             ->headerActions([
                 Action::make('enroll')

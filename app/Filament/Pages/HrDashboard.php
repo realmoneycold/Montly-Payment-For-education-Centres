@@ -14,6 +14,14 @@ class HrDashboard extends Page
 
     protected static ?int $navigationSort = 520;
 
+    // Temporarily hidden from navigation (kept for future re-enable)
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Temporarily disabled - remove this method entirely in future to re-enable
+        // return auth()->user()?->can('hr.view') ?? false;
+        return false;
+    }
+
     protected string $view = 'filament.pages.hr-dashboard';
 
     public static function canAccess(): bool
@@ -130,9 +138,16 @@ class HrDashboard extends Page
         $this->teacherHours = $data;
     }
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Organization');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Organization');
+        // Temporarily moved out of side navigation (kept for future)
+        return null;
     }
 
     public static function getNavigationLabel(): string

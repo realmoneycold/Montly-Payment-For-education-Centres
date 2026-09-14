@@ -31,14 +31,31 @@ class EventResource extends Resource
 
     protected static ?int $navigationSort = 430;
 
+    // Temporarily hidden from navigation (kept for future re-enable)
+    // protected static bool $shouldRegisterNavigation = false;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Temporarily disabled - remove this method entirely in future to re-enable
+        // return auth()->user()?->can('courses.view') ?? false;
+        return false;
+    }
+
     public static function canAccess(): bool
     {
         return auth()->user()?->can('courses.view') ?? false;
     }
 
+    // Original navigation group (kept for future re-enable):
+    // public static function getNavigationGroup(): ?string
+    // {
+    //     return __('Organization');
+    // }
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Organization');
+        // Temporarily moved out of side navigation (kept for future)
+        return null;
     }
 
     public static function getModelLabel(): string

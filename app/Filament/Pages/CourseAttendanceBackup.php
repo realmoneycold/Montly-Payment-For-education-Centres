@@ -13,7 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Gate;
 
-class CourseAttendance extends Page
+class CourseAttendanceBackup extends Page
 {
     public static function canAccess(): bool
     {

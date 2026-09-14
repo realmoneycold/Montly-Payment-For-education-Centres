@@ -105,3 +105,6 @@ Schedule::command('activitylog:clean')->monthly();
 
 // Build cached report daily at 05:15
 Schedule::command('academico:build-report')->dailyAt('05:15');
+
+// Generate monthly payment records on the 1st of every month at 00:05
+Schedule::command('app:generate-monthly-payments')->monthlyOn(1, '00:05');

@@ -82,6 +82,8 @@ class Student extends Model implements HasMedia
             ],
             [
                 'responsible_id' => auth()->id() ?? 1,
+                'status_id' => 1,
+                'total_price' => $course->price,
             ]
         );
 

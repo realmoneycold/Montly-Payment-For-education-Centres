@@ -35,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->maxContentWidth(Width::Full)
+            ->sidebarCollapsibleOnDesktop(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
@@ -49,10 +50,11 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn (): string => Blade::render('@vite(\'resources/css/app.css\')'),
             )
-            ->renderHook(
-                PanelsRenderHook::USER_MENU_BEFORE,
-                fn (): string => Blade::render('@livewire(\'locale-switcher\')'),
-            )
+            // Temporarily commented out: language switcher (kept for future re-enable)
+            // ->renderHook(
+            //     PanelsRenderHook::USER_MENU_BEFORE,
+            //     fn (): string => Blade::render('@livewire(\'locale-switcher\')'),
+            // )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

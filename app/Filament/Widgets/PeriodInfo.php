@@ -8,6 +8,11 @@ use Filament\Widgets\Widget;
 
 class PeriodInfo extends Widget
 {
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     protected static ?int $sort = -2;
 
     protected string $view = 'filament.widgets.period-info';
