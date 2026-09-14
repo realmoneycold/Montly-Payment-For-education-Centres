@@ -264,8 +264,11 @@ class StudentResource extends Resource
             ->defaultSort('id', 'desc')
             ->actionsPosition(\Filament\Tables\Enums\RecordActionsPosition::AfterColumns)
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    \Filament\Actions\DeleteAction::make(),
+                ]),
             ])
             ->headerActions([
                 ExportAction::make()
