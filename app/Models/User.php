@@ -75,7 +75,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function getNameAttribute(): string
     {
-        return $this->firstname.' '.$this->lastname;
+        return $this->lastname.' '.$this->firstname;
     }
 
     public function getForceUpdateAttribute()
