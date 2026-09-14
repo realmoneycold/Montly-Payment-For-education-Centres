@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Courses;
 
 use App\Filament\Exports\CourseExporter;
-use App\Filament\Pages\CourseAttendance;
 use App\Filament\Pages\GradeEdit;
 use App\Filament\Pages\MonthlyPayment;
 use App\Filament\Pages\SkillEvaluationPage;
@@ -39,8 +38,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class CourseResource extends Resource
@@ -325,46 +322,12 @@ class CourseResource extends Resource
                 //     ->toggleable()
                 //     ->visibleFrom('md'),
             ])
-            ->filters([
-                SelectFilter::make('period_id')
-                    ->relationship('period', 'name')
-                    ->label(__('Period'))
-                    ->default($defaultPeriod?->id)
-                    ->preload(),
-                SelectFilter::make('rhythm_id')
-                    ->relationship('rhythm', 'name')
-                    ->label(__('Rhythm'))
-                    ->preload(),
-                SelectFilter::make('level_id')
-                    ->relationship('level', 'name')
-                    ->label(__('Level'))
-                    ->preload(),
-                TernaryFilter::make('hide_children')
-                    ->label(__('Hide Submodules'))
-                    ->queries(
-                        true: fn ($query) => $query->whereNull('parent_course_id'),
-                        false: fn ($query) => $query->whereNotNull('parent_course_id'),
-                    ),
-            ])
+            ->filters([])
             ->defaultSort('start_date', 'desc')
             ->recordUrl(fn ($record): string => MonthlyPayment::getUrl(['courseId' => $record->id]))
-            ->actionsPosition(\Filament\Tables\Enums\RecordActionsPosition::BeforeColumns)
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    Action::make('monthly_payment')
-                        ->label(__('Monthly Payment'))
-                        ->icon('heroicon-o-banknotes')
-                        ->color('success')
-                        ->url(fn ($record) => MonthlyPayment::getUrl(['courseId' => $record->id])),
-                    Action::make('view_attendance')
-                        ->label(__('View Attendance'))
-                        ->icon('heroicon-o-table-cells')
-                        ->url(fn ($record) => CourseAttendance::getUrl(['courseId' => $record->id])),
-                    Action::make('view_enrollments')
-                        ->label(__('View Enrollments'))
-                        ->icon('heroicon-o-academic-cap')
-                        ->url(fn ($record) => static::getUrl('enrollments', ['record' => $record])),
                     Action::make('evaluate_skills')
                         ->label(__('Evaluate Skills'))
                         ->icon('heroicon-o-star')

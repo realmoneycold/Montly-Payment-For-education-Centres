@@ -15,7 +15,6 @@ use App\Models\Institution;
 use App\Models\Period;
 use App\Models\Student;
 use BackedEnum;
-use Carbon\Carbon;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -36,8 +35,6 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -249,7 +246,7 @@ class StudentResource extends Resource
                     ->label(__('Username'))
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->visibleFrom('md'),
                 TextColumn::make('student_age')
                     ->label(__('Age'))
                     ->visibleFrom('md'),
@@ -257,71 +254,15 @@ class StudentResource extends Resource
                     ->label(__('Birthdate'))
                     ->date()
                     ->sortable()
-                    ->toggleable()
                     ->visibleFrom('md'),
                 TextColumn::make('phone.phone_number')
                     ->label(__('Phone'))
                     ->badge()
                     ->visibleFrom('md'),
             ])
-            ->filters([
-                SelectFilter::make('institution_id')
-                    ->relationship('institution', 'name')
-                    ->label(__('Institution'))
-                    ->preload()
-                    ->searchable(),
-                Filter::make('age')
-                    ->label(__('Age'))
-                    ->schema([
-                        TextInput::make('min_age')
-                            ->label(__('Min Age'))
-                            ->numeric()
-                            ->minValue(0),
-                        TextInput::make('max_age')
-                            ->label(__('Max Age'))
-                            ->numeric()
-                            ->minValue(0),
-                    ])
-                    ->columns(2)
-                    ->query(function ($query, array $data) {
-                        if ($data['min_age']) {
-                            $query->whereHas('user', fn ($q) => $q
-                                ->where('birthdate', '<=', Carbon::now()->subYears((int) $data['min_age'])));
-                        }
-                        if ($data['max_age']) {
-                            $query->whereHas('user', fn ($q) => $q
-                                ->where('birthdate', '>=', Carbon::now()->subYears((int) $data['max_age'] + 1)));
-                        }
-                    }),
-                SelectFilter::make('enrolled_in_period')
-                    ->label(__('Enrolled In'))
-                    ->options(Period::pluck('name', 'id'))
-                    ->query(fn (Builder $query, array $data) => $query->when(
-                        $data['value'],
-                        fn (Builder $q, $v) => $q->whereHas('enrollments', fn (Builder $e) => $e->whereHas('course', fn (Builder $c) => $c->where('period_id', $v)))
-                    )),
-                SelectFilter::make('not_enrolled_in_periods')
-                    ->label(__('Not Enrolled In'))
-                    ->options(Period::pluck('name', 'id'))
-                    ->multiple()
-                    ->query(fn (Builder $query, array $data) => $query->when(
-                        $data['values'] ?? null,
-                        fn (Builder $q, $values) => collect($values)->each(
-                            fn ($v) => $q->whereDoesntHave('enrollments', fn (Builder $e) => $e->whereHas('course', fn (Builder $c) => $c->where('period_id', $v)))
-                        )
-                    )),
-                Filter::make('new_in_period')
-                    ->form([
-                        Select::make('period_id')
-                            ->label(__('New Students In'))
-                            ->options(Period::pluck('name', 'id')),
-                    ])
-                    ->query(fn (Builder $query, array $data) => $query->when(
-                        $data['period_id'],
-                        fn (Builder $q, $v) => $q->newInPeriod($v)
-                    )),
-            ])
+            ->filters([])
             ->defaultSort('id', 'desc')
+            ->actionsPosition(\Filament\Tables\Enums\RecordActionsPosition::AfterColumns)
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),

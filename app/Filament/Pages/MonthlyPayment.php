@@ -79,8 +79,8 @@ class MonthlyPayment extends Page
                             \Filament\Forms\Components\Radio::make('gender_id')
                                 ->label(__('Gender'))
                                 ->options([
-                                    1 => __('Female'),
                                     2 => __('Male'),
+                                    1 => __('Female'),
                                 ])
                                 ->default(2)
                                 ->required()
