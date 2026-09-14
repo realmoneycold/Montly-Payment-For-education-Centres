@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Students\RelationManagers;
 
-use App\Filament\Resources\Enrollments\EnrollmentResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\TextColumn;
@@ -82,7 +81,6 @@ class EnrollmentsRelationManager extends RelationManager
             //         ->label(__('Period'))
             //         ->collapsible()
             // )
-            ->recordUrl(fn ($record) => EnrollmentResource::getUrl('view', ['record' => $record]))
             ->headerActions([]);
     }
 }
