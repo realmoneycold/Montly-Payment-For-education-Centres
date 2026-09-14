@@ -325,6 +325,7 @@ class CourseResource extends Resource
             ->filters([])
             ->defaultSort('start_date', 'desc')
             ->recordUrl(fn ($record): string => MonthlyPayment::getUrl(['courseId' => $record->id]))
+            ->actionsPosition(\Filament\Tables\Enums\RecordActionsPosition::AfterColumns)
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
