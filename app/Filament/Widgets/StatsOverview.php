@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Resources\Students\StudentResource;
 use App\Models\Period;
+use App\Models\Student;
 use App\Services\StatService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -12,7 +12,7 @@ class StatsOverview extends BaseWidget
 {
     protected static ?int $sort = 1;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '30s';
 
     protected function getStats(): array
     {
@@ -23,6 +23,8 @@ class StatsOverview extends BaseWidget
         }
 
         $stats = new StatService(external: false, partner: null, reference: $period);
+
+        $newToday = Student::whereHas('user', fn ($q) => $q->whereDate('created_at', today()))->count();
 
         return [
             Stat::make(__('Enrollments'), $stats->enrollmentsCount())
@@ -40,11 +42,10 @@ class StatsOverview extends BaseWidget
                 ->icon('heroicon-o-user-group')
                 ->color('info'),
 
-            Stat::make(__('New Students'), $stats->newStudentsCount())
-                ->description($period->name)
+            Stat::make(__('New Students Today'), $newToday)
+                ->description(__('Students who joined today'))
                 ->icon('heroicon-o-user-plus')
-                ->color('warning')
-                ->url(StudentResource::getUrl('index', ['filters' => ['new_in_period' => ['period_id' => $period->id]]])),
+                ->color('warning'),
         ];
     }
 }
