@@ -1,5 +1,7 @@
 <x-filament-panels::page>
-    @php($stats = $this->getCourseStats())
+    @php
+        $stats = $this->getCourseStats();
+    @endphp
 
     @if(!$courseId)
         <x-filament::section>
@@ -111,6 +113,22 @@
                                         'partial' => 'bg-warning-50 dark:bg-warning-900/10 hover:bg-warning-100/70 dark:hover:bg-warning-900/20',
                                         default => 'hover:bg-gray-50 dark:hover:bg-gray-700/40',
                                     };
+                                    $avatarClass = match ($student['status']) {
+                                        'paid' => 'bg-success-200 text-success-800 dark:bg-success-800/50 dark:text-success-300',
+                                        'partial' => 'bg-warning-200 text-warning-800 dark:bg-warning-800/50 dark:text-warning-300',
+                                        default => 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
+                                    };
+                                    $selectClass = match ($student['status']) {
+                                        'paid' => 'border-success-500 bg-success-50 text-success-800 dark:bg-success-900/30 dark:text-success-200 dark:border-success-500/60',
+                                        'partial' => 'border-warning-500 bg-warning-50 text-warning-800 dark:bg-warning-900/30 dark:text-warning-200 dark:border-warning-500/60',
+                                        default => 'border-danger-400 bg-danger-50 text-danger-800 dark:bg-danger-900/30 dark:text-danger-200 dark:border-danger-500/60',
+                                    };
+                                    $hasComment = filled($student['comment']);
+                                    $commentBtnBase = 'inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ';
+                                    $commentBtnClass = $hasComment
+                                        ? $commentBtnBase . 'bg-primary-50 border-primary-400 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-500/60 dark:hover:bg-primary-900/50'
+                                        : $commentBtnBase . 'bg-white border-gray-200 text-gray-400 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-primary-500 dark:hover:text-primary-400 dark:hover:bg-primary-900/20';
+                                    $commentBtnTitle = $hasComment ? $student['comment'] : __('Add comment');
                                 @endphp
                                 <tr
                                     wire:key="student-{{ $student['enrollmentId'] }}"
@@ -126,12 +144,7 @@
                                     {{-- Student name --}}
                                     <td class="px-3 py-3">
                                         <div class="flex items-center gap-3">
-                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold uppercase select-none
-                                                {{ match ($student['status']) {
-                                                    'paid' => 'bg-success-200 text-success-800 dark:bg-success-800/50 dark:text-success-300',
-                                                    'partial' => 'bg-warning-200 text-warning-800 dark:bg-warning-800/50 dark:text-warning-300',
-                                                    default => 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
-                                                } }}">
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold uppercase select-none {{ $avatarClass }}">
                                                 {{ mb_substr($student['studentName'], 0, 1) }}
                                             </div>
                                             <a href="{{ url('admin/students/' . $student['studentId']) }}" class="text-base font-bold text-gray-800 hover:text-primary-600 hover:underline dark:text-gray-100 dark:hover:text-primary-400 truncate max-w-[240px]">
@@ -156,12 +169,7 @@
                                                     }
                                                     \$wire.updateStatus({{ $student['enrollmentId'] }}, status, status === 'partial' ? partialAmount : null);
                                                 "
-                                                class="w-full rounded-lg border-2 text-sm font-semibold py-2 px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition
-                                                    {{ match ($student['status']) {
-                                                        'paid' => 'border-success-500 bg-success-50 text-success-800 dark:bg-success-900/30 dark:text-success-200 dark:border-success-500/60',
-                                                        'partial' => 'border-warning-500 bg-warning-50 text-warning-800 dark:bg-warning-900/30 dark:text-warning-200 dark:border-warning-500/60',
-                                                        default => 'border-danger-400 bg-danger-50 text-danger-800 dark:bg-danger-900/30 dark:text-danger-200 dark:border-danger-500/60',
-                                                    } }}"
+                                                class="w-full rounded-lg border-2 text-sm font-semibold py-2 px-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition {{ $selectClass }}"
                                             >
                                                 <option value="paid" class="bg-white text-success-700 dark:bg-gray-800 dark:text-success-300">✅ {{ __('Paid') }}</option>
                                                 <option value="partial" class="bg-white text-warning-700 dark:bg-gray-800 dark:text-warning-300">🟡 {{ __('Partially Paid') }}</option>
@@ -207,12 +215,8 @@
                                         <button
                                             type="button"
                                             wire:click="openCommentModal({{ $student['enrollmentId'] }})"
-                                            @class([
-                                                'inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500',
-                                                'bg-primary-50 border-primary-400 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-500/60 dark:hover:bg-primary-900/50' => filled($student['comment']),
-                                                'bg-white border-gray-200 text-gray-400 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-primary-500 dark:hover:text-primary-400 dark:hover:bg-primary-900/20' => blank($student['comment']),
-                                            ])
-                                            title="{{ filled($student['comment']) ? $student['comment'] : __('Add comment') }}"
+                                            class="{{ $commentBtnClass }}"
+                                            title="{{ $commentBtnTitle }}"
                                         >
                                             <x-heroicon-m-chat-bubble-left-ellipsis class="h-4.5 w-4.5" />
                                         </button>
@@ -299,6 +303,22 @@
                                 'partial' => 'bg-warning-50/60 dark:bg-warning-900/10',
                                 default => 'bg-white dark:bg-gray-800',
                             };
+                            $mAvatarClass = match ($student['status']) {
+                                'paid' => 'bg-success-200 text-success-800 dark:bg-success-800/50 dark:text-success-300',
+                                'partial' => 'bg-warning-200 text-warning-800 dark:bg-warning-800/50 dark:text-warning-300',
+                                default => 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
+                            };
+                            $mHasComment = filled($student['comment']);
+                            $mCommentBtnBase = 'inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ';
+                            $mCommentBtnClass = $mHasComment
+                                ? $mCommentBtnBase . 'bg-primary-50 border-primary-400 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-500/60'
+                                : $mCommentBtnBase . 'bg-white border-gray-200 text-gray-400 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-primary-500 dark:hover:text-primary-400';
+                            $mCommentBtnTitle = $mHasComment ? $student['comment'] : __('Add comment');
+                            $mSelectClass = match ($student['status']) {
+                                'paid' => 'border-success-500 bg-success-50 text-success-800 dark:bg-success-900/30 dark:text-success-200',
+                                'partial' => 'border-warning-500 bg-warning-50 text-warning-800 dark:bg-warning-900/30 dark:text-warning-200',
+                                default => 'border-danger-400 bg-danger-50 text-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
+                            };
                         @endphp
                         <div
                             wire:key="mobile-student-{{ $student['enrollmentId'] }}"
@@ -307,12 +327,7 @@
                             {{-- ── Header: Avatar + Name + Actions ── --}}
                             <div class="flex items-start gap-3 mb-3">
                                 {{-- Avatar --}}
-                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-extrabold uppercase select-none
-                                    {{ match ($student['status']) {
-                                        'paid' => 'bg-success-200 text-success-800 dark:bg-success-800/50 dark:text-success-300',
-                                        'partial' => 'bg-warning-200 text-warning-800 dark:bg-warning-800/50 dark:text-warning-300',
-                                        default => 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
-                                    } }}">
+                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-extrabold uppercase select-none {{ $mAvatarClass }}">
                                     {{ mb_substr($student['studentName'], 0, 1) }}
                                 </div>
 
@@ -350,12 +365,8 @@
                                     <button
                                         type="button"
                                         wire:click="openCommentModal({{ $student['enrollmentId'] }})"
-                                        @class([
-                                            'inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500',
-                                            'bg-primary-50 border-primary-400 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-500/60' => filled($student['comment']),
-                                            'bg-white border-gray-200 text-gray-400 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-primary-500 dark:hover:text-primary-400' => blank($student['comment']),
-                                        ])
-                                        title="{{ filled($student['comment']) ? $student['comment'] : __('Add comment') }}"
+                                        class="{{ $mCommentBtnClass }}"
+                                        title="{{ $mCommentBtnTitle }}"
                                     >
                                         <x-heroicon-m-chat-bubble-left-ellipsis class="h-4.5 w-4.5" />
                                     </button>
@@ -433,12 +444,7 @@
                                         }
                                         \$wire.updateStatus({{ $student['enrollmentId'] }}, status, status === 'partial' ? partialAmount : null);
                                     "
-                                    class="w-full rounded-lg border-2 text-sm font-semibold py-2.5 px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition
-                                        {{ match ($student['status']) {
-                                            'paid' => 'border-success-500 bg-success-50 text-success-800 dark:bg-success-900/30 dark:text-success-200',
-                                            'partial' => 'border-warning-500 bg-warning-50 text-warning-800 dark:bg-warning-900/30 dark:text-warning-200',
-                                            default => 'border-danger-400 bg-danger-50 text-danger-800 dark:bg-danger-900/30 dark:text-danger-200',
-                                        } }}"
+                                    class="w-full rounded-lg border-2 text-sm font-semibold py-2.5 px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition {{ $mSelectClass }}"
                                 >
                                     <option value="paid" class="bg-white text-success-700 dark:bg-gray-800 dark:text-success-300">✅ {{ __('Paid') }}</option>
                                     <option value="partial" class="bg-white text-warning-700 dark:bg-gray-800 dark:text-warning-300">🟡 {{ __('Partially Paid') }}</option>
@@ -467,7 +473,9 @@
                         ]) }}
                     </p>
                     @if($stats['students'] > 0)
-                        @php($paidPercent = round((($stats['paid'] + $stats['partial']) / $stats['students']) * 100))
+                        @php
+                            $paidPercent = round((($stats['paid'] + $stats['partial']) / $stats['students']) * 100);
+                        @endphp
                         <div class="flex w-full sm:w-auto items-center gap-3">
                             <div class="h-2.5 flex-1 sm:w-48 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                                 <div
