@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Students\Pages;
 
-use App\Filament\Resources\Students\RelationManagers\EnrollmentsRelationManager;
+use App\Filament\Resources\Students\RelationManagers\MonthlyPaymentsRelationManager;
 use App\Filament\Resources\Students\StudentResource;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
@@ -27,9 +27,9 @@ class ViewStudent extends ViewRecord
 
         return $schema->components([
             $this->getInfolistContentComponent(),
-            Livewire::make(EnrollmentsRelationManager::class, [
+            Livewire::make(MonthlyPaymentsRelationManager::class, [
                 ...$livewireData,
-                ...EnrollmentsRelationManager::getDefaultProperties(),
+                ...MonthlyPaymentsRelationManager::getDefaultProperties(),
             ])->key('enrollments'),
         ]);
     }

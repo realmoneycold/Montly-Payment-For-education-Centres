@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Students;
 
-use App\Filament\Exports\StudentExporter;
 use App\Filament\Resources\Students\Pages\CreateStudent;
 use App\Filament\Resources\Students\Pages\EditStudent;
 use App\Filament\Resources\Students\Pages\EnrollStudent;
@@ -15,19 +14,15 @@ use App\Models\Institution;
 use App\Models\Period;
 use App\Models\Student;
 use BackedEnum;
-use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ExportAction;
-use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -36,9 +31,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Gate;
 
 class StudentResource extends Resource
 {
@@ -102,9 +94,12 @@ class StudentResource extends Resource
                             ->placeholder('-'),
                         TextEntry::make('phone.phone_number')
                             ->label(__('Phone'))
+                            ->formatStateUsing(fn (?string $state): string => $state
+                                ? preg_replace('/(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})/', '+$1 $2 $3 $4 $5', preg_replace('/\D/', '', $state))
+                                : '—'
+                            )
                             ->weight(\Filament\Support\Enums\FontWeight::Bold)
                             ->size(\Filament\Support\Enums\TextSize::Large)
-                            ->badge()
                             ->placeholder('-'),
                         TextEntry::make('institution.name')
                             ->label(__('Institution'))
@@ -242,11 +237,6 @@ class StudentResource extends Resource
                 //     ->width('180px')
                 //     ->searchable()
                 //     ->visibleFrom('md'),
-                TextColumn::make('user.username')
-                    ->label(__('Username'))
-                    ->searchable()
-                    ->sortable()
-                    ->visibleFrom('md'),
                 TextColumn::make('student_age')
                     ->label(__('Age'))
                     ->visibleFrom('md'),
@@ -257,7 +247,12 @@ class StudentResource extends Resource
                     ->visibleFrom('md'),
                 TextColumn::make('phone.phone_number')
                     ->label(__('Phone'))
-                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => $state
+                        ? preg_replace('/(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})/', '+$1 $2 $3 $4 $5', preg_replace('/\D/', '', $state))
+                        : '—'
+                    )
+                    ->size('lg')
+                    ->weight('medium')
                     ->visibleFrom('md'),
             ])
             ->filters([])
@@ -270,53 +265,9 @@ class StudentResource extends Resource
                     \Filament\Actions\DeleteAction::make(),
                 ]),
             ])
-            ->headerActions([
-                ExportAction::make()
-                    ->exporter(StudentExporter::class),
-            ])
+            ->headerActions([])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    BulkAction::make('enroll_in_group')
-                        ->label(__('Enroll in group'))
-                        ->icon('heroicon-o-user-group')
-                        ->form([
-                            Select::make('course_id')
-                                ->label(__('Group'))
-                                ->options(function (): array {
-                                    $periodId = Period::get_default_period()?->id;
-
-                                    return Course::query()
-                                        ->when($periodId, fn (Builder $query) => $query->where('period_id', $periodId))
-                                        ->whereNull('parent_course_id')
-                                        ->with('level')
-                                        ->orderBy('name')
-                                        ->get()
-                                        ->mapWithKeys(fn (Course $course): array => [
-                                            $course->id => $course->name.($course->level?->name ? ' - '.$course->level->name : ''),
-                                        ])
-                                        ->all();
-                                })
-                                ->searchable()
-                                ->preload()
-                                ->required(),
-                        ])
-                        ->requiresConfirmation()
-                        ->action(function (array $data, Collection $records): void {
-                            $course = Course::findOrFail($data['course_id']);
-                            $records->each(fn (Student $student): int => $student->enroll($course));
-
-                            Notification::make()
-                                ->title(__('Students enrolled successfully'))
-                                ->body(__(':count students were added to :group.', [
-                                    'count' => $records->count(),
-                                    'group' => $course->name,
-                                ]))
-                                ->success()
-                                ->send();
-                        })
-                        ->visible(fn (): bool => Gate::allows('enroll-students')),
-                    ExportBulkAction::make()
-                        ->exporter(StudentExporter::class),
                     DeleteBulkAction::make(),
                 ]),
             ]);

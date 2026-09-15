@@ -3,14 +3,14 @@
         <x-slot name="heading">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <span>{{ Carbon\Carbon::parse($this->selectedDate)->translatedFormat('l j F Y') }}</span>
+                    <span class="text-lg font-bold text-gray-950 dark:text-white">{{ Carbon\Carbon::parse($this->selectedDate)->translatedFormat('l j F Y') }}</span>
                     <div class="flex items-center rounded-lg border border-gray-200 dark:border-gray-700">
                         <button
                             wire:click="switchTab('list')"
                             @class([
                                 'px-3 py-1.5 text-xs font-medium rounded-l-lg transition-colors',
-                                'bg-primary-500 text-black' => $this->activeTab === 'list',
-                                'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' => $this->activeTab !== 'list',
+                                'bg-primary-500 text-white dark:bg-primary-600 dark:text-white' => $this->activeTab === 'list',
+                                'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white' => $this->activeTab !== 'list',
                             ])
                         >
                             {{ __('List') }}
@@ -19,8 +19,8 @@
                             wire:click="switchTab('calendar')"
                             @class([
                                 'px-3 py-1.5 text-xs font-medium rounded-r-lg transition-colors',
-                                'bg-primary-500 text-black' => $this->activeTab === 'calendar',
-                                'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' => $this->activeTab !== 'calendar',
+                                'bg-primary-500 text-white dark:bg-primary-600 dark:text-white' => $this->activeTab === 'calendar',
+                                'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white' => $this->activeTab !== 'calendar',
                             ])
                         >
                             {{ __('Calendar') }}
@@ -46,26 +46,26 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{{ __('Time') }}</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{{ __('Course') }}</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{{ __('Teacher') }}</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{{ __('Room') }}</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">{{ __('Time') }}</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">{{ __('Course') }}</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">{{ __('Teacher') }}</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">{{ __('Room') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($this->events as $event)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                    <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
+                                    <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-950 dark:text-white">
                                         {{ $event['start'] }} – {{ $event['end'] }}
                                     </td>
                                     <td class="px-3 py-2">
                                         <div class="flex items-center gap-2">
                                             <span class="inline-block h-3 w-3 shrink-0 rounded-full" style="background-color: {{ $event['color'] }}"></span>
-                                            <span class="text-gray-900 dark:text-gray-100">{{ $event['title'] }}</span>
+                                            <span class="font-medium text-gray-950 dark:text-white">{{ $event['title'] }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ $event['teacher'] }}</td>
-                                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ $event['room'] }}</td>
+                                    <td class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ $event['teacher'] }}</td>
+                                    <td class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ $event['room'] }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

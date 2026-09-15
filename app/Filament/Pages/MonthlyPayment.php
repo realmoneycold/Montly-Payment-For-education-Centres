@@ -33,6 +33,26 @@ class MonthlyPayment extends Page
     /** @var array<int, array<string, mixed>> */
     public array $students = [];
 
+    // Edit modal state
+    public bool $showEditModal = false;
+
+    public ?int $editStudentId = null;
+
+    public string $editFirstname = '';
+
+    public string $editLastname = '';
+
+    public string $editPhoneNumber = '';
+
+    public int $editGenderId = 2;
+
+    public ?string $editBirthdate = null;
+
+    // Delete modal state
+    public bool $showDeleteModal = false;
+
+    public ?int $deleteStudentId = null;
+
     public function mount(): void
     {
         $this->month = now()->format('Y-m');
@@ -249,6 +269,96 @@ class MonthlyPayment extends Page
             ->title($isNowPaid ? __('Marked as paid') : __('Marked as unpaid'))
             ->duration(1500)
             ->send();
+    }
+
+    public function editStudent(int $studentId): void
+    {
+        $student = \App\Models\Student::with(['user', 'phone'])->find($studentId);
+
+        if (! $student) {
+            return;
+        }
+
+        $this->editStudentId = $studentId;
+        $this->editFirstname = $student->user->firstname ?? '';
+        $this->editLastname = $student->user->lastname ?? '';
+        $this->editPhoneNumber = $student->phone->first()?->phone_number ?? '';
+        $this->editGenderId = $student->gender_id ?? 2;
+        $this->editBirthdate = $student->birthdate?->format('Y-m-d');
+        $this->showEditModal = true;
+    }
+
+    public function closeEditModal(): void
+    {
+        $this->showEditModal = false;
+    }
+
+    public function updateStudent(): void
+    {
+        $student = \App\Models\Student::with(['user', 'phone'])->find($this->editStudentId);
+
+        if (! $student) {
+            return;
+        }
+
+        $student->user->update([
+            'firstname' => $this->editFirstname,
+            'lastname' => $this->editLastname,
+        ]);
+
+        $student->update([
+            'birthdate' => $this->editBirthdate ?: null,
+            'gender_id' => $this->editGenderId,
+        ]);
+
+        if (filled($this->editPhoneNumber)) {
+            if ($student->phone()->exists()) {
+                $student->phone()->update(['phone_number' => $this->editPhoneNumber]);
+            } else {
+                $student->phone()->create(['phone_number' => $this->editPhoneNumber]);
+            }
+        } elseif ($student->phone()->exists()) {
+            $student->phone()->delete();
+        }
+
+        $this->showEditModal = false;
+
+        Notification::make()
+            ->success()
+            ->title(__('Student updated successfully'))
+            ->send();
+
+        $this->loadData();
+    }
+
+    public function confirmDeleteStudent(int $studentId): void
+    {
+        $this->deleteStudentId = $studentId;
+        $this->showDeleteModal = true;
+    }
+
+    public function closeDeleteModal(): void
+    {
+        $this->showDeleteModal = false;
+    }
+
+    public function deleteStudent(int $studentId): void
+    {
+        $enrollment = Enrollment::where('course_id', $this->courseId)
+            ->where('student_id', $studentId)
+            ->first();
+
+        if ($enrollment) {
+            MonthlyPaymentRecord::where('enrollment_id', $enrollment->id)->delete();
+            $enrollment->delete();
+        }
+
+        Notification::make()
+            ->success()
+            ->title(__('Student removed from course'))
+            ->send();
+
+        $this->loadData();
     }
 
     public static function getNavigationGroup(): ?string

@@ -10,7 +10,6 @@ use Filament\Facades\Filament;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\HtmlString;
 
 class Login extends BaseLogin
 {
@@ -57,7 +56,7 @@ class Login extends BaseLogin
 
     public function getSubheading(): string|Htmlable|null
     {
-        return new HtmlString(__('filament-panels::auth/pages/login.actions.register.before').' '.$this->registerAction->toHtml());
+        return null;
     }
 
     public function registerAction(): Action

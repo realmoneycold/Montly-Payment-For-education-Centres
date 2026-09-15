@@ -30,7 +30,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(\App\Filament\Auth\Login::class)
-            ->passwordReset()
             ->colors([
                 'primary' => Color::Amber,
             ])

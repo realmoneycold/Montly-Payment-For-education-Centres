@@ -29,20 +29,20 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-4 py-2">{{ __('Student') }}</th>
-                                <th class="px-4 py-2">{{ __('Course') }}</th>
-                                <th class="px-4 py-2 text-right">{{ __('Absences') }}</th>
+                                <th class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ __('Student') }}</th>
+                                <th class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ __('Course') }}</th>
+                                <th class="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{{ __('Absences') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($paginatedAbsences as $record)
                                 <tr class="border-b dark:border-gray-600">
-                                    <td class="px-4 py-2">
-                                        <a href="{{ route('filament.admin.pages.student-attendance', ['studentId' => $record['studentId'], 'courseId' => $record['courseId']]) }}" class="text-primary-600 hover:underline">
+                                    <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
+                                        <a href="{{ route('filament.admin.pages.student-attendance', ['studentId' => $record['studentId'], 'courseId' => $record['courseId']]) }}" class="text-primary-600 hover:underline dark:text-primary-400">
                                             {{ $record['studentName'] }}
                                         </a>
                                     </td>
-                                    <td class="px-4 py-2">{{ $record['courseName'] }}</td>
+                                    <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ $record['courseName'] }}</td>
                                     <td class="px-4 py-2 text-right">
                                         <x-filament::badge color="danger">{{ $record['absencesCount'] }}</x-filament::badge>
                                     </td>
@@ -81,20 +81,20 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-4 py-2">{{ __('Course') }}</th>
-                                <th class="px-4 py-2">{{ __('Teacher') }}</th>
-                                <th class="px-4 py-2 text-right">{{ __('Missing Events') }}</th>
+                                <th class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ __('Course') }}</th>
+                                <th class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ __('Teacher') }}</th>
+                                <th class="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{{ __('Missing Events') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($paginatedCourses as $course)
                                 <tr class="border-b dark:border-gray-600">
-                                    <td class="px-4 py-2">
-                                        <a href="{{ route('filament.admin.pages.course-attendance', ['courseId' => $course['id']]) }}" class="text-primary-600 hover:underline">
+                                    <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
+                                        <a href="{{ route('filament.admin.pages.course-attendance', ['courseId' => $course['id']]) }}" class="text-primary-600 hover:underline dark:text-primary-400">
                                             {{ $course['name'] }}
                                         </a>
                                     </td>
-                                    <td class="px-4 py-2">{{ $course['teacherName'] }}</td>
+                                    <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ $course['teacherName'] }}</td>
                                     <td class="px-4 py-2 text-right">
                                         @if($course['missing'] > 0)
                                             <x-filament::badge color="warning">{{ $course['missing'] }}</x-filament::badge>

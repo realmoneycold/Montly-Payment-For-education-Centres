@@ -27,12 +27,12 @@ class StatsOverview extends BaseWidget
         $newToday = Student::whereHas('user', fn ($q) => $q->whereDate('created_at', today()))->count();
 
         return [
-            Stat::make(__('Enrollments'), $stats->enrollmentsCount())
+            Stat::make(__('Courses'), $stats->coursesCount())
                 ->description($period->name)
                 ->icon('heroicon-o-academic-cap')
                 ->color('primary'),
 
-            Stat::make(__('Paid Enrollments'), $stats->paidEnrollmentsCount())
+            Stat::make(__('Monthly Payments'), $stats->paidEnrollmentsCount())
                 ->description(__('Pending').': '.$stats->pendingEnrollmentsCount())
                 ->icon('heroicon-o-credit-card')
                 ->color('success'),

@@ -85,7 +85,7 @@
                             @endif
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ $gt['name'] }}</td>
-                                <td class="px-4 py-2 text-center text-gray-400">{{ $gt['total'] }}</td>
+                                <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-300">{{ $gt['total'] }}</td>
                                 <td class="px-4 py-2 text-center">
                                     <input
                                         type="number"
@@ -104,7 +104,7 @@
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                             <td class="px-4 py-2 font-bold text-gray-900 dark:text-white">{{ __('Total') }}</td>
-                            <td class="px-4 py-2 text-center text-gray-400 font-bold">{{ $maxTotal }}</td>
+                            <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-300 font-bold">{{ $maxTotal }}</td>
                             <td class="px-4 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">{{ $currentStudent['total'] ?: '—' }}</td>
                         </tr>
                     </tfoot>
@@ -182,15 +182,15 @@
                                 @foreach($gradeTypes as $gt)
                                     <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         @if($gt['categoryName'])
-                                            <span class="text-xs text-gray-400 block">({{ $gt['categoryName'] }})</span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 block">({{ $gt['categoryName'] }})</span>
                                         @endif
                                         {{ $gt['name'] }}
-                                        <span class="text-xs text-gray-400">/{{ $gt['total'] }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">/{{ $gt['total'] }}</span>
                                     </th>
                                 @endforeach
                                 <th class="px-3 py-2 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     {{ __('Total') }}
-                                    <span class="text-xs text-gray-400 font-normal">/ {{ collect($gradeTypes)->sum('total') }}</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">/ {{ collect($gradeTypes)->sum('total') }}</span>
                                 </th>
                                 <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Result') }}</th>
                                 <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Comment') }}</th>
@@ -224,7 +224,7 @@
                                                 {{ $enrollment['resultTypeName'] }}
                                             </span>
                                         @else
-                                            <span class="text-xs text-gray-400">—</span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">—</span>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 max-w-[150px] truncate">

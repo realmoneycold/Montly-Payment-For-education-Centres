@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Courses;
 
-use App\Filament\Exports\CourseExporter;
 use App\Filament\Pages\GradeEdit;
 use App\Filament\Pages\MonthlyPayment;
 use App\Filament\Pages\SkillEvaluationPage;
@@ -20,8 +19,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ExportAction;
-use Filament\Actions\ExportBulkAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DatePicker;
@@ -296,7 +293,7 @@ class CourseResource extends Resource
                     ->width('200px')
                     ->visibleFrom('lg'),
                 TextColumn::make('course_enrollments_count')
-                    ->label(__('Enrollments'))
+                    ->label(__('Students'))
                     ->weight(\Filament\Support\Enums\FontWeight::Bold)
                     ->size(\Filament\Support\Enums\TextSize::Large)
                     ->sortable()
@@ -342,14 +339,9 @@ class CourseResource extends Resource
                     DeleteAction::make(),
                 ]),
             ])
-            ->headerActions([
-                ExportAction::make()
-                    ->exporter(CourseExporter::class),
-            ])
+            ->headerActions([])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    ExportBulkAction::make()
-                        ->exporter(CourseExporter::class),
                     DeleteBulkAction::make(),
                 ]),
             ]);
