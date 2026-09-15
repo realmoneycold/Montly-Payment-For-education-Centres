@@ -53,6 +53,13 @@ class MonthlyPayment extends Page
 
     public ?int $deleteStudentId = null;
 
+    // Comment modal state
+    public bool $showCommentModal = false;
+
+    public ?int $commentEnrollmentId = null;
+
+    public string $commentText = '';
+
     public function mount(): void
     {
         $this->month = now()->format('Y-m');
@@ -193,15 +200,22 @@ class MonthlyPayment extends Page
     {
         $enrollments = Enrollment::where('course_id', $this->courseId)->pluck('id');
 
-        $paidCount = MonthlyPaymentRecord::whereIn('enrollment_id', $enrollments)
+        $paymentRecords = MonthlyPaymentRecord::whereIn('enrollment_id', $enrollments)
             ->where('month', $this->month)
-            ->whereNotNull('paid_at')
-            ->count();
+            ->get();
+
+        $paidCount = $paymentRecords->where('status', 'paid')->count();
+        $partialCount = $paymentRecords->where('status', 'partial')->count();
+        $unpaidCount = $enrollments->count() - $paidCount - $partialCount;
+
+        $totalPaidAmount = (float) $paymentRecords->sum('paid_amount');
 
         return [
             'students' => $enrollments->count(),
             'paid' => $paidCount,
-            'unpaid' => $enrollments->count() - $paidCount,
+            'partial' => $partialCount,
+            'unpaid' => $unpaidCount,
+            'totalPaidAmount' => $totalPaidAmount,
         ];
     }
 
@@ -219,11 +233,15 @@ class MonthlyPayment extends Page
         $studentsData = [];
         foreach ($enrollments as $enrollment) {
             $paymentRecord = $monthlyPayments->get($enrollment->id);
+            $status = $paymentRecord?->status ?? 'unpaid';
             $studentsData[] = [
                 'enrollmentId' => (int) $enrollment->id,
                 'studentId' => (int) $enrollment->student_id,
                 'studentName' => $enrollment->student?->name ?? '',
-                'isPaid' => $paymentRecord && $paymentRecord->paid_at !== null,
+                'isPaid' => $status === 'paid',
+                'status' => $status,
+                'paidAmount' => $paymentRecord?->paid_amount,
+                'comment' => $paymentRecord?->comment,
             ];
         }
 
@@ -233,8 +251,12 @@ class MonthlyPayment extends Page
             ->toArray();
     }
 
-    public function togglePaid(int $enrollmentId): void
+    public function updateStatus(int $enrollmentId, string $newStatus, ?string $paidAmount = null): void
     {
+        if (! in_array($newStatus, ['paid', 'partial', 'unpaid'], true)) {
+            return;
+        }
+
         $enrollment = Enrollment::find($enrollmentId);
 
         if (! $enrollment) {
@@ -246,27 +268,113 @@ class MonthlyPayment extends Page
             'month' => $this->month,
         ]);
 
-        $isNowPaid = false;
-        if ($paymentRecord->paid_at === null) {
-            $paymentRecord->paid_at = now();
-            $isNowPaid = true;
+        $paymentRecord->status = $newStatus;
+        $paymentRecord->paid_at = match ($newStatus) {
+            'paid', 'partial' => $paymentRecord->paid_at ?? now(),
+            'unpaid' => null,
+        };
+
+        if ($newStatus === 'partial' && filled($paidAmount)) {
+            $amount = (float) str_replace(',', '', $paidAmount);
+            $paymentRecord->paid_amount = $amount > 0 ? $amount : null;
+        } elseif ($newStatus === 'paid') {
+            if (! $paymentRecord->paid_amount) {
+                $paymentRecord->paid_amount = null;
+            }
         } else {
-            $paymentRecord->paid_at = null;
+            $paymentRecord->paid_amount = null;
         }
 
         $paymentRecord->save();
 
+        $statusLabel = match ($newStatus) {
+            'paid' => __('Paid'),
+            'partial' => __('Partially Paid'),
+            'unpaid' => __('Not paid'),
+        };
+
         // Update local state
         foreach ($this->students as $index => $student) {
             if ($student['enrollmentId'] === $enrollmentId) {
-                $this->students[$index]['isPaid'] = $isNowPaid;
+                $this->students[$index]['status'] = $newStatus;
+                $this->students[$index]['isPaid'] = $newStatus === 'paid';
+                if ($newStatus === 'partial' && filled($paidAmount)) {
+                    $this->students[$index]['paidAmount'] = (float) str_replace(',', '', $paidAmount);
+                } elseif ($newStatus === 'unpaid') {
+                    $this->students[$index]['paidAmount'] = null;
+                }
                 break;
             }
         }
 
         Notification::make()
             ->success()
-            ->title($isNowPaid ? __('Marked as paid') : __('Marked as unpaid'))
+            ->title(__('Status updated').': '.$statusLabel)
+            ->duration(1500)
+            ->send();
+    }
+
+    public function openCommentModal(int $enrollmentId): void
+    {
+        $this->commentEnrollmentId = $enrollmentId;
+
+        $currentComment = null;
+        foreach ($this->students as $student) {
+            if ($student['enrollmentId'] === $enrollmentId) {
+                $currentComment = $student['comment'];
+                break;
+            }
+        }
+
+        $this->commentText = (string) $currentComment;
+        $this->showCommentModal = true;
+    }
+
+    public function closeCommentModal(): void
+    {
+        $this->showCommentModal = false;
+        $this->commentEnrollmentId = null;
+        $this->commentText = '';
+    }
+
+    public function saveComment(): void
+    {
+        if (! $this->commentEnrollmentId) {
+            return;
+        }
+
+        $enrollment = Enrollment::find($this->commentEnrollmentId);
+
+        if (! $enrollment) {
+            $this->closeCommentModal();
+
+            return;
+        }
+
+        $paymentRecord = MonthlyPaymentRecord::firstOrNew([
+            'enrollment_id' => $this->commentEnrollmentId,
+            'month' => $this->month,
+        ]);
+
+        if (! $paymentRecord->status) {
+            $paymentRecord->status = 'unpaid';
+        }
+
+        $paymentRecord->comment = filled($this->commentText) ? trim($this->commentText) : null;
+        $paymentRecord->save();
+
+        foreach ($this->students as $index => $student) {
+            if ($student['enrollmentId'] === $this->commentEnrollmentId) {
+                $this->students[$index]['comment'] = filled($this->commentText) ? trim($this->commentText) : null;
+                break;
+            }
+        }
+
+        $this->closeCommentModal();
+
+        Notification::make()
+            ->success()
+            ->title(__('Comment saved'))
             ->duration(1500)
             ->send();
     }

@@ -16,10 +16,14 @@ class MonthlyPaymentRecord extends Model
         'enrollment_id',
         'month',
         'paid_at',
+        'status',
+        'paid_amount',
+        'comment',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'paid_amount' => 'decimal:2',
     ];
 
     public function enrollment(): BelongsTo
